@@ -1,226 +1,213 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Brain, 
-  Activity, 
-  Wind, 
-  Focus, 
-  Layers, 
-  ChevronRight, 
-  Bell, 
-  Settings,
-  ShieldCheck,
-  Zap
-} from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 import ZenSphere from "@/components/ZenSphere";
 import ShiftLogo from "@/components/ShiftLogo";
+import AmbientDashboard from "@/components/AmbientDashboard";
+import WaitingRoom from "@/components/WaitingRoom";
+import FocusMode from "@/components/FocusMode";
+import FlowStateGraph from "@/components/FlowStateGraph";
+import Onboarding from "@/components/Onboarding";
+import { Maximize2, Shield, Radio, Activity, LayoutGrid, Bell, Zap, Cloud, Mail, MessageSquare, Menu } from "lucide-react";
+
+// Mock Data for the Bouncer with AI Reasoning
+const INITIAL_NOTIFS = [
+  { id: 1, title: "Deep Work Session", time: "10:00 AM", category: "Focus", icon: <Zap className="w-4 h-4" />, score: 9.2, reason: "Matches your peak productivity window." },
+  { id: 2, title: "Team Sync: Strategy", time: "2:00 PM", category: "Meeting", icon: <Bell className="w-4 h-4" />, score: 8.5, reason: "High-priority calendar event." },
+  { id: 3, source: "Slack", content: "3 messages from #marketing", icon: <MessageSquare className="w-3 h-3" />, score: 4.5, reason: "Non-urgent internal chatter." },
+  { id: 4, source: "Gmail", content: "Newsletter: Tech Weekly", icon: <Mail className="w-3 h-3" />, score: 2.1, reason: "Low priority promotional content." },
+];
 
 export default function Home() {
+  const [isFocusMode, setIsFocusMode] = useState(false);
   const [load, setLoad] = useState(24);
-  const [isFocus, setIsFocus] = useState(false);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [notifications, setNotifications] = useState(INITIAL_NOTIFS);
 
-  // Simulate dynamic load changes
+  const threshold = isFocusMode ? 9.5 : 7.0;
+
+  const dashboardItems = useMemo(() => 
+    notifications.filter(n => (n.score || 0) >= threshold), 
+    [notifications, threshold]
+  );
+
+  const waitingRoomItems = useMemo(() => 
+    notifications.filter(n => (n.score || 0) < threshold), 
+    [notifications, threshold]
+  );
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setLoad(prev => {
-        const change = (Math.random() - 0.5) * 5;
-        return Math.max(10, Math.min(95, prev + change));
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+    let targetLoad = dashboardItems.length * 12 + 10;
+    if (isFocusMode) targetLoad = 12;
+    const timer = setTimeout(() => setLoad(targetLoad), 500);
+    return () => clearTimeout(timer);
+  }, [dashboardItems, isFocusMode]);
+
+  const addNotification = () => {
+    const scores = [2, 5, 8, 9.8];
+    const randomScore = scores[Math.floor(Math.random() * scores.length)];
+    const newNotif = {
+      id: Date.now(),
+      source: randomScore > 7 ? "Urgent System" : "Slack",
+      content: randomScore > 7 ? "Critical Security Patch" : "Someone mentioned you",
+      icon: randomScore > 7 ? <Bell className="w-4 h-4" /> : <MessageSquare className="w-3 h-3" />,
+      score: randomScore,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      category: randomScore > 7 ? "Alert" : "Social",
+      title: randomScore > 7 ? "Critical Alert" : "Message Received",
+      reason: randomScore > 7 ? "Security protocol bypass" : "Low priority social ping"
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white font-sans selection:bg-white/20 overflow-hidden">
-      {/* Background Ambient Glows */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 rounded-full blur-[120px]" />
+    <main className="flex min-h-screen flex-col items-start relative overflow-hidden bg-[#050505]">
+      <Onboarding />
+      
+      {/* Background Zen sphere - large and subtle */}
+      <div className="fixed inset-0 pointer-events-none opacity-30">
+        <ZenSphere load={load} isFocus={isFocusMode} />
       </div>
 
-      {/* Header */}
-      <nav className="relative z-50 flex items-center justify-between px-8 py-6 backdrop-blur-md border-b border-white/5">
-        <div className="flex items-center gap-8">
+      {/* Navigation */}
+      <nav className="w-full flex justify-between items-center z-50 py-6 md:py-8 px-6 md:px-12 bg-[#050505]/50 backdrop-blur-md">
+        <div className="flex-1">
           <ShiftLogo />
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-400">
-            <button 
-              onClick={() => setActiveTab("dashboard")}
-              className={`transition-colors hover:text-white ${activeTab === "dashboard" ? "text-white" : ""}`}
-            >
-              Dashboard
-            </button>
-            <button 
-              onClick={() => setActiveTab("focus")}
-              className={`transition-colors hover:text-white ${activeTab === "focus" ? "text-white" : ""}`}
-            >
-              Focus Mode
-            </button>
-            <button className="transition-colors hover:text-white">Insights</button>
-          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
-            <Bell size={20} className="text-zinc-400" />
+        
+        {/* Desktop Controls */}
+        <div className="hidden md:flex gap-4 items-center">
+          <button 
+            onClick={addNotification}
+            className="flex items-center gap-3 px-6 py-2 rounded-full border border-white/5 text-[9px] font-bold tracking-[0.2em] text-zinc-600 hover:text-white transition-all uppercase"
+          >
+            Simulate Event
           </button>
-          <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
-            <Settings size={20} className="text-zinc-400" />
+          <button 
+            onClick={() => setIsFocusMode(true)}
+            className="flex items-center gap-3 px-8 py-3 rounded-full glass hover:bg-white/10 transition-all text-[10px] font-bold tracking-[0.3em] uppercase group"
+          >
+            <Maximize2 className="w-3 h-3 group-hover:scale-110 transition-transform" />
+            Focus Mode
           </button>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-zinc-700 to-zinc-500 border border-white/10" />
+        </div>
+
+        {/* Mobile Toggle */}
+        <div className="flex md:hidden gap-3">
+          <button onClick={() => setIsFocusMode(true)} className="p-3 rounded-full glass">
+            <Maximize2 className="w-4 h-4 text-white" />
+          </button>
+          <button onClick={addNotification} className="p-3 rounded-full border border-white/5">
+            <Zap className="w-4 h-4 text-zinc-600" />
+          </button>
         </div>
       </nav>
 
-      <main className="relative z-10 flex-1 flex flex-col items-center px-6 pt-12">
-        <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* Floating White Line Separator */}
+      <div className="w-[calc(100%-3rem)] md:w-[calc(100%-6rem)] mx-auto h-[1px] bg-white/10 z-50" />
+
+      {/* Main Content Area */}
+      <div className="w-full flex justify-center z-10">
+        <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16 items-start p-6 md:p-12 lg:p-24 lg:pt-16">
           
-          {/* Left Column: Stats & Context */}
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:col-span-4 flex flex-col gap-8"
-          >
-            <div className="flex flex-col gap-2">
-              <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-blue-400">System Status</h2>
-              <h1 className="text-4xl font-bold tracking-tight">Managing Load.</h1>
-              <p className="text-zinc-400 leading-relaxed max-w-sm">
-                Shift is monitoring your cognitive state across 8 active digital contexts. 
-                Focus is currently high.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="glass p-4 rounded-2xl flex flex-col gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <Activity size={16} className="text-blue-400" />
-                </div>
-                <div>
-                  <div className="text-xs text-zinc-500 uppercase font-bold tracking-wider">Cognitive Load</div>
-                  <div className="text-2xl font-bold">{Math.round(load)}%</div>
-                </div>
-              </div>
-              <div className="glass p-4 rounded-2xl flex flex-col gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                  <Focus size={16} className="text-emerald-400" />
-                </div>
-                <div>
-                  <div className="text-xs text-zinc-500 uppercase font-bold tracking-wider">Focus Rating</div>
-                  <div className="text-2xl font-bold">{isFocus ? "Peak" : "Steady"}</div>
-                </div>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => setIsFocus(!isFocus)}
-              className={`group flex items-center justify-between w-full p-4 rounded-2xl transition-all duration-500 ${
-                isFocus 
-                ? "bg-white text-black shadow-[0_0_40px_rgba(255,255,255,0.3)]" 
-                : "bg-zinc-900 text-white hover:bg-zinc-800"
-              }`}
+          {/* Left Column: FlowState and Core UI */}
+          <div className="lg:col-span-8 flex flex-col gap-12 md:gap-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isFocus ? "bg-black/5" : "bg-white/5"}`}>
-                  <Zap size={18} fill={isFocus ? "currentColor" : "none"} />
+              {/* Contextual Status Bar */}
+              <div className="flex flex-wrap items-center gap-4 mb-8 md:mb-10">
+                <div className="glass px-4 md:px-6 py-2 rounded-full flex items-center gap-3 border-white/5">
+                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${load > 60 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                  <span className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">
+                    {isFocusMode 
+                      ? "Deep Work: Noise Silenced" 
+                      : load > 60 
+                        ? "High Input: Bouncer Active" 
+                        : "Optimal Flow"}
+                  </span>
                 </div>
-                <span className="font-bold">{isFocus ? "Exit Deep Focus" : "Enter Deep Focus"}</span>
               </div>
-              <ChevronRight size={18} className={`transition-transform duration-300 ${isFocus ? "rotate-180" : "group-hover:translate-x-1"}`} />
-            </button>
-          </motion.div>
 
-          {/* Center Column: ZenSphere */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="lg:col-span-4 flex flex-col items-center justify-center relative"
-          >
-            <div className="w-[450px] h-[450px] relative">
-              <ZenSphere load={load} isFocus={isFocus} />
+              <div className="flex items-center gap-3 mb-6">
+                <Shield className="w-4 h-4 text-zinc-600" />
+                <span className="text-zinc-600 text-[10px] font-bold tracking-[0.4em] uppercase">
+                  {isFocusMode ? "Bouncer: Max Security" : "Bouncer: Active"}
+                </span>
+              </div>
               
-              {/* Dynamic Overlay Info */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={isFocus ? "focus" : "normal"}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="text-center"
-                  >
-                    <div className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-1">
-                      Current State
-                    </div>
-                    <div className="text-2xl font-black tracking-tighter">
-                      {isFocus ? "SILENCE" : "BALANCED"}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right Column: Contextual Tasks */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="lg:col-span-4 flex flex-col gap-6"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-500">Active Contexts</h2>
-              <button className="text-xs font-bold text-blue-400 hover:underline">View All</button>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {[
-                { name: "Frontend Development", icon: <Layers size={14} />, color: "bg-blue-500" },
-                { name: "Communication Hub", icon: <Bell size={14} />, color: "bg-purple-500" },
-                { name: "System Research", icon: <Brain size={14} />, color: "bg-emerald-500" }
-              ].map((item, i) => (
-                <div key={i} className="glass p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-2 h-2 rounded-full ${item.color}`} />
-                    <span className="text-sm font-medium">{item.name}</span>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ChevronRight size={14} className="text-zinc-600" />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 p-6 rounded-3xl bg-gradient-to-br from-zinc-900 to-black border border-white/5 flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <ShieldCheck size={20} className="text-blue-400" />
-                <span className="text-sm font-bold">Shift AI Guard</span>
-              </div>
-              <p className="text-xs text-zinc-500 leading-relaxed">
-                Blocking 14 high-friction notifications to maintain your current focus state.
+              <h1 className="text-5xl md:text-8xl font-extralight tracking-tight text-white mb-8 leading-[1.1]">
+                Manage your <br/>
+                <span className="text-zinc-500 italic font-light">cognitive load.</span>
+              </h1>
+              
+              <p className="text-zinc-500 text-lg md:text-xl max-w-xl font-light leading-relaxed tracking-wide">
+                {waitingRoomItems.length} interruptions filtered. Protecting your current flow state.
               </p>
-              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full"
+            >
+              <AmbientDashboard items={dashboardItems} />
+            </motion.div>
+          </div>
+
+          {/* Right Column: Waiting Room and Stats */}
+          <div className="lg:col-span-4 flex flex-col gap-10 lg:sticky lg:top-24 w-full">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1.2, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <WaitingRoom items={waitingRoomItems} />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <FlowStateGraph />
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1.2, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="glass p-8 md:p-10 rounded-[3rem] flex flex-col gap-8 w-full"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Activity className="w-4 h-4 text-zinc-600" />
+                  <span className="text-zinc-500 text-[10px] font-bold tracking-[0.2em] uppercase">Neural Load</span>
+                </div>
+                <span className={`text-[10px] font-bold tracking-widest ${load > 60 ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {load}%
+                </span>
+              </div>
+              <div className="w-full h-1 bg-zinc-900/50 rounded-full overflow-hidden">
                 <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: "70%" }}
-                  className="h-full bg-blue-500"
+                  animate={{ width: `${load}%` }}
+                  transition={{ duration: 1.5, ease: "circOut" }}
+                  className={`h-full ${load > 60 ? 'bg-red-500/40' : 'bg-emerald-500/40'}`} 
                 />
               </div>
-            </div>
-          </motion.div>
-
+            </motion.div>
+          </div>
         </div>
-      </main>
+      </div>
 
-      {/* Footer Branding */}
-      <footer className="p-8 flex justify-center opacity-30">
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold">
-          <Wind size={12} />
-          <span>Shift Ecosystem • 2026</span>
-        </div>
+      <FocusMode isActive={isFocusMode} onClose={() => setIsFocusMode(false)} />
+
+      <footer className="mt-auto py-12 text-zinc-800 text-[10px] font-bold tracking-[1em] uppercase text-center w-full opacity-40 px-6">
+        Proxion 2026 // Shift System v1.3
       </footer>
-    </div>
+    </main>
   );
 }

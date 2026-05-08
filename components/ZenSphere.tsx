@@ -8,12 +8,11 @@ import * as THREE from "three";
 function AnimatedSphere({ load, isFocus }: { load: number, isFocus: boolean }) {
   const meshRef = useRef<THREE.Mesh>(null);
   
-  // Calculate stress color based on cognitive load
   const color = useMemo(() => {
-    if (isFocus) return "#ffffff"; // Pure calm white
-    if (load > 80) return "#ff4d4d"; // Stressed red
-    if (load > 50) return "#4d94ff"; // Moderate blue
-    return "#888888"; // Idle grey
+    if (isFocus) return "#ffffff"; 
+    if (load > 80) return "#ff4d4d"; 
+    if (load > 50) return "#4d94ff"; 
+    return "#888888"; 
   }, [load, isFocus]);
 
   const speed = isFocus ? 0.5 : (load / 20);

@@ -6,7 +6,7 @@ export default function ShiftLogo() {
   return (
     <motion.div
       drag="x"
-      dragConstraints={{ left: 0, right: 800 }}
+      dragConstraints={{ left: 0, right: 300 }}
       dragSnapToOrigin
       whileDrag={{ scale: 1.1, cursor: "grabbing" }}
       initial={{ y: 0 }}
