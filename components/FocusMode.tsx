@@ -1,125 +1,146 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, Calendar, CheckCircle2 } from "lucide-react";
+import { X, Play, Pause, Volume2, Shield, Wind, CloudRain, Coffee, Trees, Droplets } from "lucide-react";
+
+interface Environment {
+  id: string;
+  name: string;
+  icon: any;
+  color: string;
+  bg: string;
+}
+
+const ENVIRONMENTS: Environment[] = [
+  { id: "space", name: "Deep Space", icon: Wind, color: "text-shift-purple", bg: "bg-space-950" },
+  { id: "rain", name: "Rainfall", icon: CloudRain, color: "text-blue-400", bg: "bg-blue-950" },
+  { id: "forest", name: "Ancient Forest", icon: Trees, color: "text-emerald-400", bg: "bg-emerald-950" },
+  { id: "cafe", name: "Digital Cafe", icon: Coffee, color: "text-amber-400", bg: "bg-amber-950" },
+];
 
 export default function FocusMode({ isActive, onClose }: { isActive: boolean; onClose: () => void }) {
-  const [breathStage, setBreathStage] = useState("Inhale");
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const oscillatorRef = useRef<OscillatorNode | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
-
-  useEffect(() => {
-    if (isActive) {
-      // Initialize Audio
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioContextClass) {
-        audioContextRef.current = new AudioContextClass();
-        
-        const osc = audioContextRef.current.createOscillator();
-        const gain = audioContextRef.current.createGain();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(852, audioContextRef.current.currentTime); 
-        
-        gain.gain.setValueAtTime(0, audioContextRef.current.currentTime);
-        
-        osc.connect(gain);
-        gain.connect(audioContextRef.current.destination);
-        
-        osc.start();
-        oscillatorRef.current = osc;
-        gainNodeRef.current = gain;
-      }
-    } else {
-      if (oscillatorRef.current) {
-        oscillatorRef.current.stop();
-        oscillatorRef.current.disconnect();
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    }
-  }, [isActive]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [env, setEnv] = useState(ENVIRONMENTS[0]);
+  const [breathingPhase, setBreathingPhase] = useState<"Breathe In" | "Hold" | "Breathe Out" | "Relax">("Breathe In");
+  const [timer, setTimer] = useState(0);
 
   useEffect(() => {
     if (!isActive) return;
     
     const interval = setInterval(() => {
-      setBreathStage((prev) => {
-        const next = prev === "Inhale" ? "Exhale" : "Inhale";
-        
-        if (gainNodeRef.current && audioContextRef.current) {
-          const now = audioContextRef.current.currentTime;
-          const targetVolume = next === "Inhale" ? 0.05 : 0.01; 
-          gainNodeRef.current.gain.exponentialRampToValueAtTime(targetVolume + 0.001, now + 4);
-        }
-        
-        return next;
-      });
-    }, 4000);
-    
+      setTimer(prev => prev + 1);
+      // Box Breathing Cycle (4s in, 4s hold, 4s out, 4s hold)
+      const cycle = timer % 16;
+      if (cycle < 4) setBreathingPhase("Breathe In");
+      else if (cycle < 8) setBreathingPhase("Hold");
+      else if (cycle < 12) setBreathingPhase("Breathe Out");
+      else setBreathingPhase("Relax");
+    }, 1000);
+
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, [isActive, timer]);
+
+  if (!isActive) return null;
 
   return (
-    <AnimatePresence>
-      {isActive && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 backdrop-blur-2xl p-6"
-        >
-          <button 
-            onClick={onClose}
-            className="absolute top-12 right-12 text-zinc-600 hover:text-white transition-colors"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className={`fixed inset-0 z-[500] ${env.bg} flex flex-col items-center justify-center overflow-hidden transition-colors duration-[2000ms]`}
+    >
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-radial-[at_center,_var(--color-black)_0%,_transparent_100%] opacity-60" />
+        
+        {/* Breathing Ring */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div
+            animate={{
+              scale: breathingPhase === 'Breathe In' ? 2 : breathingPhase === 'Breathe Out' ? 1 : 1.5,
+              opacity: breathingPhase === 'Hold' ? 0.3 : 0.6,
+            }}
+            transition={{ duration: 4, ease: "easeInOut" }}
+            className={`w-[400px] h-[400px] rounded-full border-[1px] ${env.color} border-opacity-30 blur-3xl`}
+          />
+        </div>
+      </div>
+
+      {/* Force Field Visual */}
+      <div className="absolute inset-0 border-[60px] border-white/[0.01] pointer-events-none" />
+
+      {/* Main UI */}
+      <div className="z-10 flex flex-col items-center gap-20">
+        <div className="flex flex-col items-center gap-8">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            className={`p-12 rounded-full border border-white/5 bg-white/[0.02] relative`}
           >
-            <X className="w-8 h-8" />
-          </button>
-
-          <div className="flex flex-col items-center gap-16 text-center">
-            <motion.div
-              animate={{ 
-                scale: breathStage === "Inhale" ? 1.5 : 1,
-                opacity: breathStage === "Inhale" ? 1 : 0.5 
-              }}
-              transition={{ duration: 4, ease: "easeInOut" }}
-              className="w-48 h-48 rounded-full bg-white/5 border border-white/10 flex items-center justify-center"
-            >
-              <div className="w-4 h-4 rounded-full bg-white shadow-[0_0_40px_rgba(255,255,255,0.5)]" />
-            </motion.div>
-
-            <div className="flex flex-col gap-4">
+             <Shield className={`w-14 h-14 ${env.color} opacity-40`} />
+             <div className="absolute inset-0 flex items-center justify-center">
+               <motion.div 
+                 animate={{ scale: [1, 1.4, 1] }}
+                 transition={{ duration: 4, repeat: Infinity }}
+                 className={`w-3 h-3 rounded-full ${env.color} shadow-[0_0_20px_currentColor]`}
+               />
+             </div>
+          </motion.div>
+          
+          <div className="flex flex-col items-center gap-4">
+            <AnimatePresence mode="wait">
               <motion.h2 
-                key={breathStage}
+                key={breathingPhase}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-4xl font-light tracking-[0.2em] text-white uppercase"
+                exit={{ opacity: 0, y: -10 }}
+                className="text-6xl font-extralight text-white tracking-tighter uppercase"
               >
-                {breathStage}
+                {breathingPhase}
               </motion.h2>
-              <p className="text-zinc-500 text-sm tracking-[0.4em] uppercase font-bold">FlowState Meditation</p>
-            </div>
+            </AnimatePresence>
+            <p className="text-[10px] font-bold text-zinc-500 tracking-[0.6em] uppercase">
+              Orbital Stability Active
+            </p>
           </div>
+        </div>
 
-          <div className="absolute bottom-24 flex gap-12">
-             <div className="flex flex-col items-center gap-2">
-               <Mail className="w-4 h-4 text-zinc-700" />
-               <span className="text-[9px] text-zinc-800 font-bold tracking-widest uppercase">Urgent Mail</span>
-             </div>
-             <div className="flex flex-col items-center gap-2">
-               <Calendar className="w-4 h-4 text-zinc-700" />
-               <span className="text-[9px] text-zinc-800 font-bold tracking-widest uppercase">Next Meeting</span>
-             </div>
-             <div className="flex flex-col items-center gap-2 border-t-2 border-emerald-500 pt-2">
-               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-               <span className="text-[9px] text-emerald-500 font-bold tracking-widest uppercase">Urgent Task</span>
-             </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        {/* Environment Controls */}
+        <div className="flex gap-4 p-3 glass rounded-[2.5rem] border-white/5 bg-white/[0.01]">
+          {ENVIRONMENTS.map((e) => (
+            <button
+              key={e.id}
+              onClick={() => setEnv(e)}
+              className={`p-5 rounded-3xl transition-all flex flex-col items-center gap-3 ${
+                env.id === e.id ? 'bg-white/10 text-white shadow-xl' : 'text-zinc-600 hover:text-zinc-400'
+              }`}
+            >
+              <e.icon className="w-6 h-6" />
+              <span className="text-[9px] font-bold uppercase tracking-widest">{e.name}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="flex gap-10 items-center">
+           <button onClick={() => setIsPlaying(!isPlaying)} className="p-8 bg-white rounded-full text-black hover:scale-105 active:scale-95 transition-all shadow-2xl">
+              {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
+           </button>
+           <button onClick={onClose} className="p-8 bg-white/5 border border-white/10 rounded-full text-zinc-500 hover:text-white transition-all">
+              <X className="w-8 h-8" />
+           </button>
+        </div>
+
+        <div className="flex flex-col items-center gap-4">
+           <div className="flex items-center gap-3">
+             <Droplets className="w-4 h-4 text-zinc-700" />
+             <span className="text-zinc-700 text-[10px] font-bold tracking-[0.4em] uppercase">Water Reminder: 45 min</span>
+           </div>
+           <p className="text-zinc-800 text-[10px] font-bold tracking-widest uppercase opacity-40">
+             Notifications Silenced // Focus Optimized // Bio-Sync Active
+           </p>
+        </div>
+      </div>
+    </motion.div>
   );
 }
