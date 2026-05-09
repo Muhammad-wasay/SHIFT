@@ -247,10 +247,10 @@ export default function Home() {
                     <>
                       {!isLaunching ? (
                         <div className="flex flex-col gap-24">
-                           <div className="grid grid-cols-1 xl:grid-cols-2 gap-24 items-start">
+                           <div className="grid grid-cols-1 xl:grid-cols-2 gap-16 items-start">
                               <div className="flex flex-col gap-12">
                                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
-                                    <h1 className="text-6xl lg:text-7xl xl:text-8xl font-extralight tracking-tighter text-white leading-[1.1] md:leading-tight">
+                                    <h1 className="text-6xl lg:text-7xl xl:text-[5.5rem] font-extralight tracking-tighter text-white leading-[1.1] md:leading-tight">
                                        Sustainable <br/>
                                        <span className="shift-logo italic font-light">focus.</span>
                                     </h1>
@@ -336,7 +336,7 @@ function NavItem({ active, onClick, icon: Icon, label }: { active: boolean, onCl
     <div className="relative group">
       <button 
         onClick={onClick}
-        className={`p-3.5 rounded-2xl transition-all relative z-10 ${active ? 'bg-shift-purple text-white' : 'text-zinc-600 hover:text-white'}`}
+        className={`p-3.5 rounded-2xl transition-all relative z-10 ${active ? 'bg-white text-black dark:bg-white dark:text-black' : 'text-zinc-600 hover:text-white'}`}
       >
         <Icon className="w-5 h-5" />
       </button>
