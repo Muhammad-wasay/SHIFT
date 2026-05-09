@@ -1,11 +1,53 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import ShiftLogo from "@/components/ShiftLogo";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function SignIn() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  useEffect(() => {
+    const msg = searchParams.get("message");
+    if (msg) setMessage(msg);
+  }, [searchParams]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (signInError) throw signInError;
+
+      if (data.user) {
+        router.push("/"); // Redirect to home/dashboard
+      }
+    } catch (err: any) {
+      setError(err.message || "Invalid login credentials");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background Glow */}
@@ -26,13 +68,28 @@ export default function SignIn() {
             <p className="text-zinc-500 text-sm">Enter your credentials to access your flow.</p>
           </div>
 
-          <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+              {error}
+            </div>
+          )}
+
+          {message && (
+            <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs text-center">
+              {message}
+            </div>
+          )}
+
+          <form className="flex flex-col gap-6" onSubmit={handleSignIn}>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-4">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                 <input 
                   type="email" 
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="name@company.com"
                   className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:border-white/20 transition-all"
                 />
@@ -45,15 +102,27 @@ export default function SignIn() {
                 <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                 <input 
                   type="password" 
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••"
                   className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:border-white/20 transition-all"
                 />
               </div>
             </div>
 
-            <button className="mt-4 w-full py-5 rounded-2xl bg-white text-black font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 group">
-              Sign In
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <button 
+              disabled={isLoading}
+              className="mt-4 w-full py-5 rounded-2xl bg-white text-black font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 group"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
 
@@ -68,3 +137,4 @@ export default function SignIn() {
     </div>
   );
 }
+

@@ -32,7 +32,64 @@ body {
   background: radial-gradient(circle at top right, #0a1e3e 0%, #020202 100%);
   font-family: var(--font-geist-sans), sans-serif;
   overflow-x: hidden;
-  transition: background 1.5s ease-in-out;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* LIGHT MODE - WARM / EYE-RELAXING */
+main.light {
+  background: #fffcf0;
+  color: #2d2a2e;
+}
+
+main.light .glass {
+  background: rgba(255, 252, 224, 0.4);
+  border-color: rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(184, 158, 107, 0.1);
+}
+
+main.light .glass-premium {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+}
+
+main.light .bg-white\/5 {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+main.light .bg-white\/10 {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+main.light .hover\:bg-white\/10:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+main.light .shift-logo {
+  background: linear-gradient(to bottom, #1a1a1a 50%, rgba(0,0,0,0.5) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.05));
+}
+
+main.light .text-zinc-400, main.light .text-zinc-500, main.light .text-zinc-600 {
+  color: #6b686b;
+}
+
+main.light .text-white {
+  color: #1a1a1a;
+}
+
+main.light .bg-white\/\[0\.02\] {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+main.light .bg-shift-purple {
+  background: #7c3aed;
+}
+
+main.light .border-white\/5, main.light .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.05);
 }
 
 /* PREMIUM GLASSMORPHISM SYSTEM */
@@ -80,12 +137,20 @@ body {
 
 /* SHIFT LOGO & TYPOGRAPHY */
 .shift-logo {
-  font-family: var(--font-inter);
-  letter-spacing: -0.06em;
+  font-family: var(--font-syncopate), sans-serif;
+  letter-spacing: 0.15em;
   font-weight: 900;
-  background: linear-gradient(to bottom, #fff 40%, rgba(255,255,255,0.4) 100%);
+  text-transform: uppercase;
+  background: linear-gradient(to bottom, #fff 50%, rgba(255,255,255,0.4) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
+}
+
+.font-horizon {
+  font-family: var(--font-syncopate), sans-serif;
+  letter-spacing: 0.1em;
 }
 
 /* CUSTOM SCROLLBAR */

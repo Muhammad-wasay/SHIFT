@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-export default function ShiftLogo() {
+export default function ShiftLogo({ mini = false }: { mini?: boolean }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -12,11 +12,11 @@ export default function ShiftLogo() {
     >
       <motion.div
         animate={{ 
-          y: [-2, 2, -2],
+          y: [-1, 1, -1],
           filter: [
-            "drop-shadow(0 0 8px rgba(124, 58, 237, 0.3))",
-            "drop-shadow(0 0 15px rgba(124, 58, 237, 0.5))",
-            "drop-shadow(0 0 8px rgba(124, 58, 237, 0.3))"
+            "drop-shadow(0 0 8px rgba(124, 58, 237, 0.1))",
+            "drop-shadow(0 0 15px rgba(124, 58, 237, 0.3))",
+            "drop-shadow(0 0 8px rgba(124, 58, 237, 0.1))"
           ]
         }}
         transition={{ 
@@ -24,18 +24,23 @@ export default function ShiftLogo() {
           repeat: Infinity, 
           ease: "easeInOut" 
         }}
-        className="shift-logo text-3xl md:text-4xl text-white flex items-center gap-1"
+        className={`shift-logo font-syncopate ${mini ? 'text-xl' : 'text-3xl md:text-4xl'} text-white flex items-center gap-1.5 tracking-[0.1em]`}
       >
         <span>SHIFT</span>
-        <motion.div 
-          animate={{ y: [0, -4, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="w-1.5 h-1.5 rounded-full bg-shift-purple shadow-[0_0_10px_rgba(124,58,237,1)]" 
-        />
+        {!mini && (
+          <motion.div 
+            animate={{ y: [0, -3, 0], scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="w-1.5 h-1.5 rounded-full bg-shift-purple shadow-[0_0_10px_rgba(124,58,237,1)]" 
+          />
+        )}
       </motion.div>
       
-      <div className="absolute -bottom-1 left-0 w-0 h-[1px] bg-gradient-to-r from-shift-purple to-transparent group-hover:w-full transition-all duration-700 ease-out opacity-50" />
+      {!mini && (
+        <div className="absolute -bottom-1 left-0 w-0 h-[1px] bg-gradient-to-r from-shift-purple to-transparent group-hover:w-full transition-all duration-700 ease-out opacity-50" />
+      )}
     </motion.div>
   );
 }
+
 

@@ -1,11 +1,58 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ShiftLogo from "@/components/ShiftLogo";
-import { User, Mail, Lock, ArrowRight } from "lucide-react";
+import { User, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function SignUp() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+  });
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.fullName,
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (data.user) {
+        // Create profile entry
+        await supabase.from('profiles').insert({
+          id: data.user.id,
+          full_name: formData.fullName,
+        });
+
+        // Redirect to signin or dashboard
+        router.push("/auth/signin?message=Check your email to confirm your account");
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred during sign up");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background Glow */}
@@ -26,13 +73,22 @@ export default function SignUp() {
             <p className="text-zinc-500 text-sm">Start managing your cognitive load today.</p>
           </div>
 
-          <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+              {error}
+            </div>
+          )}
+
+          <form className="flex flex-col gap-6" onSubmit={handleSignUp}>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest ml-4">Full Name</label>
               <div className="relative">
                 <User className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                 <input 
                   type="text" 
+                  required
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   placeholder="John Doe"
                   className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:border-white/20 transition-all"
                 />
@@ -45,6 +101,9 @@ export default function SignUp() {
                 <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                 <input 
                   type="email" 
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="name@company.com"
                   className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:border-white/20 transition-all"
                 />
@@ -57,15 +116,27 @@ export default function SignUp() {
                 <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
                 <input 
                   type="password" 
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="Create a strong password"
                   className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:border-white/20 transition-all"
                 />
               </div>
             </div>
 
-            <button className="mt-4 w-full py-5 rounded-2xl bg-white text-black font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 group">
-              Get Started
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <button 
+              disabled={isLoading}
+              className="mt-4 w-full py-5 rounded-2xl bg-white text-black font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 group"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  Get Started
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
 
@@ -80,3 +151,4 @@ export default function SignUp() {
     </div>
   );
 }
+
