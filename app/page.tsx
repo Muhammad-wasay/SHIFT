@@ -24,6 +24,7 @@ import StudentMode from "@/components/StudentMode";
 import AmbientEngine from "@/components/AmbientEngine";
 import AchievementSystem from "@/components/AchievementSystem";
 import VoiceCommander from "@/components/VoiceCommander";
+import Onboarding from "@/components/Onboarding";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
 import { 
@@ -49,6 +50,19 @@ export default function Home() {
   const [energy, setEnergy] = useState(82);
   const [weights, setWeights] = useState<any[]>([]);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem("shift_onboarding_seen");
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    localStorage.setItem("shift_onboarding_seen", "true");
+  };
 
   // Sync with Supabase on mount
   useEffect(() => {
@@ -160,24 +174,19 @@ export default function Home() {
         <ZenSphere load={load} isFocus={isFocusMode} />
       </div>
 
-      {/* Side Navigation (Expanded Ecosystem) */}
+      {/* Side Navigation (Streamlined Ecosystem) */}
       <nav className="h-screen w-24 flex flex-col items-center py-10 gap-8 z-[100] glass border-r border-white/5">
-        <div className="flex-1 flex flex-col gap-4">
+        <div className="flex-1 flex flex-col gap-6">
           <NavItem active={activeTab === 'orbit'} onClick={() => setActiveTab('orbit')} icon={LayoutGrid} label="Orbit" />
           <NavItem active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={Calendar} label="Schedule" />
           <NavItem active={activeTab === 'debris'} onClick={() => setActiveTab('debris')} icon={Mail} label="Triage" />
-          <NavItem active={activeTab === 'prep'} onClick={() => setActiveTab('prep')} icon={Target} label="Prep" />
-          <NavItem active={activeTab === 'habits'} onClick={() => setActiveTab('habits')} icon={Activity} label="Habits" />
-          <NavItem active={activeTab === 'matrix'} onClick={() => setActiveTab('matrix')} icon={Scale} label="Matrix" />
-          <NavItem active={activeTab === 'observer'} onClick={() => setActiveTab('observer')} icon={ShieldAlert} label="Observer" />
-          <NavItem active={activeTab === 'shield'} onClick={() => setActiveTab('shield')} icon={ShieldCheck} label="Shield" />
-          <NavItem active={activeTab === 'vault'} onClick={() => setActiveTab('vault')} icon={Trophy} label="Vault" />
           <NavItem active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} icon={BarChart3} label="Data" />
         </div>
 
         <div className="flex flex-col gap-4 mt-auto">
            <button onClick={() => setShowReflection(true)} title="Journal" className="p-3 text-zinc-600 hover:text-white transition-all"><Moon className="w-5 h-5" /></button>
-           <button onClick={() => setShowCoach(true)} title="AI Coach" className="p-3 bg-shift-purple rounded-xl text-white hover:scale-105 transition-all"><MessageSquare className="w-5 h-5" /></button>
+           <button onClick={() => setShowCoach(true)} title="AI Coach" className="p-3 bg-shift-purple/20 border border-shift-purple/30 rounded-xl text-shift-purple hover:bg-shift-purple hover:text-white transition-all"><MessageSquare className="w-5 h-5" /></button>
+           <div className="w-10 h-[1px] bg-white/5 my-2" />
            <button onClick={signOut} title="Sign Out" className="p-3 text-zinc-600 hover:text-rose-400 transition-all"><LogOut className="w-5 h-5" /></button>
         </div>
       </nav>
@@ -207,25 +216,34 @@ export default function Home() {
               <div className="flex items-center gap-6">
                 <div className="px-5 py-2 rounded-full flex items-center gap-3 border border-white/5 bg-white/[0.02]">
                   <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${load > 75 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
-                  <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-400">
-                    {load > 85 ? "Critical" : load > 60 ? "Heavy" : "Clear"}
+                  <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-500">
+                    Load
                   </span>
                   <div className="w-[1px] h-3 bg-white/10" />
                   <span className="text-[9px] font-bold text-white tracking-widest">{load}%</span>
                 </div>
                 <div className="px-5 py-2 rounded-full flex items-center gap-3 border border-white/5 bg-white/[0.02]">
                    <Zap className="w-3 h-3 text-amber-500" />
-                   <span className="text-[9px] font-bold text-white tracking-widest">{energy}%</span>
+                   <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-zinc-500">
+                    Energy
+                   </span>
+                   <div className="w-[1px] h-3 bg-white/10" />
+                   <span className="text-[9px] font-bold text-white tracking-widest">{Math.round(energy)}%</span>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-6">
-               <div className="text-right">
-                  <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest leading-none mb-1">Pilot</p>
-                  <p className="text-[11px] text-white font-medium">{user?.user_metadata?.full_name || user?.email}</p>
+               <div className="flex items-center gap-3 glass py-1.5 pl-2 pr-5 rounded-2xl border-white/5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-shift-purple to-blue-500 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+                    {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest leading-none mb-1">Pilot Active</p>
+                    <p className="text-[10px] text-white font-medium truncate max-w-[80px]">{user?.user_metadata?.full_name || user?.email?.split('@')[0]}</p>
+                  </div>
                </div>
-               <button onClick={() => setIsFocusMode(true)} className="px-6 py-2.5 bg-white text-black rounded-xl text-[10px] font-bold uppercase tracking-widest hover:scale-105 transition-all shadow-lg border border-white/10">Launch Focus</button>
+               <button onClick={() => setIsFocusMode(true)} className="px-6 py-2.5 bg-white text-black rounded-xl text-[10px] font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/5 border border-white/10">Launch Focus</button>
             </div>
           </motion.header>
         </div>
@@ -241,23 +259,23 @@ export default function Home() {
               className="w-full"
             >
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-20">
-                <div className={`${activeTab === 'analytics' || activeTab === 'prep' || activeTab === 'habits' || activeTab === 'matrix' || activeTab === 'observer' || activeTab === 'shield' || activeTab === 'student' || activeTab === 'vault' ? 'xl:col-span-12' : 'xl:col-span-8'} flex flex-col gap-20`}>
+                <div className={`${activeTab === 'analytics' || activeTab === 'prep' || activeTab === 'habits' || activeTab === 'matrix' || activeTab === 'observer' || activeTab === 'shield' || activeTab === 'student' || activeTab === 'vault' ? 'xl:col-span-12' : 'xl:col-span-12'} flex flex-col gap-20`}>
                   
                   {activeTab === 'orbit' && (
                     <>
                       {!isLaunching ? (
                         <div className="flex flex-col gap-24">
-                           <div className="grid grid-cols-1 xl:grid-cols-2 gap-16 items-start">
-                              <div className="flex flex-col gap-12">
+                           <div className="grid grid-cols-1 xl:grid-cols-12 gap-20 items-start">
+                              <div className="flex flex-col gap-12 xl:col-span-6">
                                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6">
-                                    <h1 className="text-6xl lg:text-7xl xl:text-[5.5rem] font-extralight tracking-tighter text-white leading-[1.1] md:leading-tight">
+                                    <h1 className="text-5xl lg:text-6xl xl:text-[4.5rem] font-extralight tracking-tighter text-white leading-[1] md:leading-tight">
                                        Sustainable <br/>
-                                       <span className="shift-logo italic font-light">focus.</span>
+                                       <span className="shift-logo italic font-light !text-6xl !tracking-widest">focus.</span>
                                     </h1>
                                  </motion.div>
                                  <WeightCollector onLift={handleLift} />
                               </div>
-                              <div className="flex flex-col gap-12 xl:pt-16">
+                              <div className="flex flex-col gap-12 xl:col-span-6 xl:pt-8">
                                  <VoiceCommander onResult={handleVoiceCommand} />
                                  <AmbientEngine />
                               </div>
@@ -327,6 +345,8 @@ export default function Home() {
       </AnimatePresence>
 
       <FocusMode isActive={isFocusMode} onClose={() => setIsFocusMode(false)} />
+      
+      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
     </main>
   );
 }

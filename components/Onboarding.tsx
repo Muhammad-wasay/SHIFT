@@ -2,104 +2,138 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Sparkles, Brain, Zap, ArrowRight, X } from "lucide-react";
+import { Sparkles, Brain, Zap, Activity, ArrowRight, X, Shield, Target } from "lucide-react";
+import ShiftLogo from "./ShiftLogo";
 
-const STEPS = [
+interface Step {
+  title: string;
+  description: string;
+  icon: any;
+  color: string;
+}
+
+const STEPS: Step[] = [
   {
-    title: "Meet the Bouncer",
-    desc: "Your personal AI gatekeeper. It scores every incoming event and only lets the essential ones through to your dashboard.",
-    icon: <Shield className="w-8 h-8 text-white" />,
+    title: "System Initialization",
+    description: "Welcome to SHIFT. Your cognitive load is being analyzed and digitized. Prepare for a more focused existence.",
+    icon: Shield,
+    color: "text-blue-400"
   },
   {
-    title: "Zen Sphere Visualization",
-    desc: "The central orb pulses based on your cognitive load. If it turns red, it's time to trigger Focus Mode.",
-    icon: <Brain className="w-8 h-8 text-white" />,
+    title: "The Gravity of Thought",
+    description: "Every thought has weight. We measure this as 'Load'. Higher load slows your decision-making. We're here to lift it.",
+    icon: Brain,
+    color: "text-shift-purple"
   },
   {
-    title: "Deep Work: 852Hz",
-    desc: "Focus Mode uses ancient frequencies and guided breathing to stabilize your neural activity instantly.",
-    icon: <Zap className="w-8 h-8 text-white" />,
+    title: "Orbital Offloading",
+    description: "Use the Weight Collector or Voice Commander to send messy thoughts into orbit. Clear your mind, keep your productivity.",
+    icon: Target,
+    color: "text-emerald-400"
   },
   {
-    title: "AI Digest",
-    desc: "Don't worry about what's missing. The Bouncer summarizes the Waiting Room so you can catch up in seconds.",
-    icon: <Sparkles className="w-8 h-8 text-white" />,
+    title: "Bio-Energy Sync",
+    description: "We track your biological energy in real-time. When it's low, the system will suggest tactical recovery breaks.",
+    icon: Zap,
+    color: "text-amber-400"
   }
 ];
 
-export default function Onboarding() {
-  const [isVisible, setIsVisible] = useState(false);
+export default function Onboarding({ onComplete }: { onComplete: () => void }) {
   const [currentStep, setCurrentStep] = useState(0);
-
-  useEffect(() => {
-    const hasSeen = localStorage.getItem("shift_onboarding");
-    if (!hasSeen) setIsVisible(true);
-  }, []);
+  const [isVisible, setIsVisible] = useState(true);
 
   const next = () => {
     if (currentStep < STEPS.length - 1) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep(currentStep + 1);
     } else {
-      finish();
+      setIsVisible(false);
+      setTimeout(onComplete, 500);
     }
   };
 
-  const finish = () => {
-    localStorage.setItem("shift_onboarding", "true");
+  const skip = () => {
     setIsVisible(false);
+    setTimeout(onComplete, 500);
   };
 
   return (
     <AnimatePresence>
       {isVisible && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-3xl p-6"
+          className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 backdrop-blur-2xl p-6"
         >
-          <motion.div 
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            className="w-full max-w-lg glass rounded-[3rem] p-12 relative overflow-hidden"
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="w-full max-w-2xl glass-premium rounded-[3rem] border-white/10 overflow-hidden relative"
           >
-            {/* Close */}
-            <button onClick={finish} className="absolute top-8 right-8 text-zinc-600 hover:text-white transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex flex-col items-center text-center gap-10">
-              <div className="p-6 rounded-[2rem] bg-white/5 border border-white/10">
-                {STEPS[currentStep].icon}
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <h2 className="text-3xl font-light text-white tracking-tight leading-tight">
-                  {STEPS[currentStep].title}
-                </h2>
-                <p className="text-zinc-500 text-lg leading-relaxed font-light">
-                  {STEPS[currentStep].desc}
-                </p>
-              </div>
-
-              {/* Progress */}
-              <div className="flex gap-2">
-                {STEPS.map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`h-1 rounded-full transition-all duration-500 ${i === currentStep ? 'w-8 bg-white' : 'w-2 bg-zinc-800'}`} 
+            {/* Progress Bar */}
+            <div className="absolute top-0 left-0 w-full h-1.5 flex gap-1 px-1 pt-1">
+              {STEPS.map((_, i) => (
+                <div key={i} className="flex-1 h-full bg-white/5 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: i <= currentStep ? '100%' : '0%' }}
+                    className={`h-full ${i === currentStep ? 'bg-shift-purple' : 'bg-white/20'}`}
                   />
-                ))}
+                </div>
+              ))}
+            </div>
+
+            <div className="p-12 md:p-16 flex flex-col items-center text-center gap-10">
+              <div className="flex flex-col items-center gap-6">
+                <ShiftLogo />
+                <div className="h-px w-12 bg-white/10" />
               </div>
 
-              <button 
-                onClick={next}
-                className="w-full py-5 rounded-2xl bg-white text-black font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 group mt-4"
-              >
-                {currentStep === STEPS.length - 1 ? "Enter System" : "Next Principle"}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="flex flex-col items-center gap-8"
+                >
+                  <div className={`p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 ${STEPS[currentStep].color}`}>
+                    {(() => {
+                      const Icon = STEPS[currentStep].icon;
+                      return <Icon className="w-12 h-12" />;
+                    })()}
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    <h2 className="text-3xl font-light text-white tracking-tight">{STEPS[currentStep].title}</h2>
+                    <p className="text-zinc-500 text-lg leading-relaxed max-w-md mx-auto">
+                      {STEPS[currentStep].description}
+                    </p>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+
+              <div className="flex items-center gap-6 mt-6">
+                <button 
+                  onClick={skip}
+                  className="text-zinc-600 hover:text-white text-[10px] font-bold uppercase tracking-widest transition-colors"
+                >
+                  Skip Tutorial
+                </button>
+                <button 
+                  onClick={next}
+                  className="px-10 py-5 bg-white text-black rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all flex items-center gap-4 group shadow-2xl shadow-white/10"
+                >
+                  {currentStep === STEPS.length - 1 ? "Initialize OS" : "Next Protocol"}
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
             </div>
+
+            {/* Decorative Grid */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
           </motion.div>
         </motion.div>
       )}

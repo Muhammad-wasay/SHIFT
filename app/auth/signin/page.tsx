@@ -64,7 +64,7 @@ function SignInContent() {
 
         <div className="glass rounded-[3rem] p-10 md:p-12 border-white/5">
           <div className="mb-10 text-center">
-            <h1 className="text-3xl font-light text-white mb-2 tracking-tight">Welcome Back</h1>
+            <h1 className="text-3xl font-light text-white mb-2 tracking-tight">Welcome to SHIFT</h1>
             <p className="text-zinc-500 text-sm">Enter your credentials to access your flow.</p>
           </div>
 
