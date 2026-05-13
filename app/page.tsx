@@ -51,6 +51,13 @@ export default function Home() {
   const [weights, setWeights] = useState<any[]>([]);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [dailyReflectionValue, setDailyReflectionValue] = useState<number | null>(null);
+  const [minSplash, setMinSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinSplash(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("shift_onboarding_seen");
@@ -113,9 +120,21 @@ export default function Home() {
         if (isFocusMode) return Math.max(10, prev - 0.5);
         return Math.min(100, prev + 0.2);
       });
-    }, 10000);
+      
+      // Natural Load Decay: Slowly reduce load when not adding tasks
+      setLoad(prev => {
+        if (isFocusMode) return Math.max(20, prev - 0.2); // Faster decay in focus
+        return Math.max(20, prev - 0.05); // Natural slow decay
+      });
+    }, 5000); // Check every 5 seconds
     return () => clearInterval(interval);
   }, [isFocusMode]);
+
+  const handleFocusClose = () => {
+    setIsFocusMode(false);
+    // Significant load reduction after focus session
+    setLoad(prev => Math.max(20, prev - 15));
+  };
 
   const handleLift = useCallback(async (newWeights: any[]) => {
     setWeights(prev => [...prev, ...newWeights]);
@@ -149,21 +168,40 @@ export default function Home() {
     setIsLaunching(true);
   };
 
-  if (loading || !user) {
+  if (loading || minSplash) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-6">
-          <ShiftLogo />
-          <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden relative">
+      <motion.div 
+        initial={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.8 }}
+        className="fixed inset-0 z-[1000] bg-[#050505] flex items-center justify-center"
+      >
+        <div className="flex flex-col items-center gap-8">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 1 }}
+          >
+            <ShiftLogo />
+          </motion.div>
+          <div className="w-64 h-[2px] bg-white/5 rounded-full overflow-hidden relative">
             <motion.div 
               initial={{ x: "-100%" }}
               animate={{ x: "100%" }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-              className="absolute inset-0 bg-white/20"
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-shift-purple to-transparent"
             />
           </div>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.6em] animate-pulse"
+          >
+            Bio-Syncing Neural Interface
+          </motion.p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -315,7 +353,7 @@ export default function Home() {
                   {activeTab === 'shield' && <DistractionBlocker />}
                   {activeTab === 'student' && <StudentMode />}
                   {activeTab === 'vault' && <AchievementSystem />}
-                  {activeTab === 'analytics' && <BurnoutDashboard />}
+                  {activeTab === 'analytics' && <BurnoutDashboard reflectionValue={dailyReflectionValue} />}
                 </div>
 
                 {['orbit', 'schedule', 'debris'].includes(activeTab) && !isLaunching && (
@@ -341,10 +379,20 @@ export default function Home() {
       <AnimatePresence>
         {showChat && <AssistantChat load={load} tasksCount={weights.length} onClose={() => setShowChat(false)} />}
         {showCoach && <AILifeCoach load={load} energy={energy} tasksCount={weights.length} onClose={() => setShowCoach(false)} />}
-        {showReflection && <ReflectionJournal onClose={() => setShowReflection(false)} />}
+        {showReflection && (
+          <ReflectionJournal 
+            onClose={() => setShowReflection(false)} 
+            onComplete={(val) => setDailyReflectionValue(val)}
+            stats={{
+              tasksCompleted: weights.length + 4,
+              focusMinutes: Math.floor(Math.random() * 60) + 120,
+              peakLoad: load
+            }}
+          />
+        )}
       </AnimatePresence>
 
-      <FocusMode isActive={isFocusMode} onClose={() => setIsFocusMode(false)} />
+      <FocusMode isActive={isFocusMode} onClose={handleFocusClose} />
       
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
     </main>

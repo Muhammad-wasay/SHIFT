@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Play, Pause, Volume2, Shield, Wind, CloudRain, Coffee, Trees, Droplets } from "lucide-react";
+import { X, Play, Pause, Volume2, Shield, Wind, CloudRain, Coffee, Trees, Droplets, Loader2 } from "lucide-react";
 
 interface Environment {
   id: string;
@@ -10,20 +10,58 @@ interface Environment {
   icon: any;
   color: string;
   bg: string;
+  url: string;
 }
 
 const ENVIRONMENTS: Environment[] = [
-  { id: "space", name: "Deep Space", icon: Wind, color: "text-shift-purple", bg: "bg-space-950" },
-  { id: "rain", name: "Rainfall", icon: CloudRain, color: "text-blue-400", bg: "bg-blue-950" },
-  { id: "forest", name: "Ancient Forest", icon: Trees, color: "text-emerald-400", bg: "bg-emerald-950" },
-  { id: "cafe", name: "Digital Cafe", icon: Coffee, color: "text-amber-400", bg: "bg-amber-950" },
+  { id: "space", name: "Deep Space", icon: Wind, color: "text-shift-purple", bg: "bg-space-950", url: "/sound/deep%20space.mp3" },
+  { id: "rain", name: "Rainfall", icon: CloudRain, color: "text-blue-400", bg: "bg-blue-950", url: "/sound/rain.mp3" },
+  { id: "forest", name: "Ancient Forest", icon: Trees, color: "text-emerald-400", bg: "bg-emerald-950", url: "/sound/forest.mp3" },
+  { id: "cafe", name: "Digital Cafe", icon: Coffee, color: "text-amber-400", bg: "bg-amber-950", url: "/sound/cafe.mp3" },
 ];
 
 export default function FocusMode({ isActive, onClose }: { isActive: boolean; onClose: () => void }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [env, setEnv] = useState(ENVIRONMENTS[0]);
+  const [isLoading, setIsLoading] = useState(false);
   const [breathingPhase, setBreathingPhase] = useState<"Breathe In" | "Hold" | "Breathe Out" | "Relax">("Breathe In");
   const [timer, setTimer] = useState(0);
+  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Audio Logic
+  useEffect(() => {
+    if (isActive) {
+      audioRef.current = new Audio(env.url);
+      audioRef.current.loop = true;
+      
+      const handleCanPlay = () => setIsLoading(false);
+      audioRef.current.addEventListener('canplaythrough', handleCanPlay);
+
+      if (isPlaying) {
+        setIsLoading(true);
+        audioRef.current.play().catch(e => console.log("Audio play blocked", e));
+      }
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeEventListener('canplaythrough', () => {});
+        audioRef.current = null;
+      }
+    };
+  }, [isActive, env]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(e => console.log("Audio play blocked", e));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -111,11 +149,19 @@ export default function FocusMode({ isActive, onClose }: { isActive: boolean; on
           {ENVIRONMENTS.map((e) => (
             <button
               key={e.id}
-              onClick={() => setEnv(e)}
-              className={`p-5 rounded-3xl transition-all flex flex-col items-center gap-3 ${
+              onClick={() => {
+                setIsLoading(true);
+                setEnv(e);
+              }}
+              className={`p-5 rounded-3xl transition-all flex flex-col items-center gap-3 relative overflow-hidden ${
                 env.id === e.id ? 'bg-white/10 text-white shadow-xl' : 'text-zinc-600 hover:text-zinc-400'
               }`}
             >
+              {env.id === e.id && isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10">
+                   <Loader2 className="w-4 h-4 animate-spin text-white" />
+                </div>
+              )}
               <e.icon className="w-6 h-6" />
               <span className="text-[9px] font-bold uppercase tracking-widest">{e.name}</span>
             </button>
@@ -123,7 +169,10 @@ export default function FocusMode({ isActive, onClose }: { isActive: boolean; on
         </div>
 
         <div className="flex gap-10 items-center">
-           <button onClick={() => setIsPlaying(!isPlaying)} className="p-8 bg-white rounded-full text-black hover:scale-105 active:scale-95 transition-all shadow-2xl">
+           <button 
+             onClick={() => setIsPlaying(!isPlaying)} 
+             className="p-8 bg-white rounded-full text-black hover:scale-105 active:scale-95 transition-all shadow-2xl relative"
+           >
               {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
            </button>
            <button onClick={onClose} className="p-8 bg-white/5 border border-white/10 rounded-full text-zinc-500 hover:text-white transition-all">
@@ -136,8 +185,8 @@ export default function FocusMode({ isActive, onClose }: { isActive: boolean; on
              <Droplets className="w-4 h-4 text-zinc-700" />
              <span className="text-zinc-700 text-[10px] font-bold tracking-[0.4em] uppercase">Water Reminder: 45 min</span>
            </div>
-           <p className="text-zinc-800 text-[10px] font-bold tracking-widest uppercase opacity-40">
-             Notifications Silenced // Focus Optimized // Bio-Sync Active
+           <p className="text-zinc-800 text-[10px] font-bold tracking-widest uppercase opacity-40 text-center px-10">
+             Notifications Silenced // Ambient Shield Active // Bio-Sync Active
            </p>
         </div>
       </div>

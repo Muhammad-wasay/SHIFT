@@ -2,10 +2,20 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Moon, Heart, Battery, CloudRain, Wind, X, CheckCircle2 } from "lucide-react";
+import { Sparkles, Moon, Heart, Battery, CloudRain, Wind, X, CheckCircle2, Zap, Target, Activity } from "lucide-react";
 
-export default function ReflectionJournal({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState(1);
+interface ReflectionProps {
+  onClose: () => void;
+  onComplete?: (value: number) => void;
+  stats: {
+    tasksCompleted: number;
+    focusMinutes: number;
+    peakLoad: number;
+  };
+}
+
+export default function ReflectionJournal({ onClose, onComplete, stats }: ReflectionProps) {
+  const [step, setStep] = useState(0); // 0 for Summary, 1-3 for Questions
   const [reflection, setReflection] = useState("");
   const [energy, setEnergy] = useState(50);
 
@@ -33,70 +43,126 @@ export default function ReflectionJournal({ onClose }: { onClose: () => void }) 
         </div>
 
         {/* Content */}
-        <div className="glass-premium p-12 rounded-[3.5rem] border-white/10 relative overflow-hidden">
+        <div className="glass-premium p-12 rounded-[3.5rem] border-white/10 relative overflow-hidden min-h-[450px] flex flex-col">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="flex flex-col gap-10"
-            >
-              <div className="flex flex-col gap-2">
-                <h3 className="text-2xl text-white font-light">{steps[step - 1].question}</h3>
-                <p className="text-zinc-500 text-xs font-light tracking-widest uppercase">{steps[step - 1].sub}</p>
-              </div>
+            {step === 0 ? (
+              <motion.div
+                key="summary"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="flex flex-col gap-10 flex-1"
+              >
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-2xl text-white font-light">Today's Orbit Summary</h3>
+                  <p className="text-zinc-500 text-xs font-bold tracking-widest uppercase">System metrics captured during your session</p>
+                </div>
 
-              {step === 1 && (
-                <div className="flex flex-col gap-8">
-                  <div className="flex justify-between text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
-                    <span>Weightless</span>
-                    <span>Critical Mass</span>
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col gap-4">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    <div>
+                      <p className="text-2xl text-white font-light">{stats.tasksCompleted}</p>
+                      <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">Tasks Cleared</p>
+                    </div>
                   </div>
-                  <input 
-                    type="range" 
-                    min="0" max="100" 
-                    value={energy} 
-                    onChange={(e) => setEnergy(parseInt(e.target.value))}
-                    className="w-full accent-shift-purple h-1 bg-white/5 rounded-full appearance-none cursor-pointer"
-                  />
-                  <div className="text-center text-5xl font-extralight text-white tracking-tighter">
-                    {energy}G
+                  <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col gap-4">
+                    <Target className="w-5 h-5 text-shift-purple" />
+                    <div>
+                      <p className="text-2xl text-white font-light">{stats.focusMinutes}</p>
+                      <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">Focus Min</p>
+                    </div>
+                  </div>
+                  <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 flex flex-col gap-4">
+                    <Activity className="w-5 h-5 text-rose-500" />
+                    <div>
+                      <p className="text-2xl text-white font-light">{stats.peakLoad}%</p>
+                      <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">Peak Load</p>
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {(step === 2 || step === 3) && (
-                <textarea
-                  autoFocus
-                  value={reflection}
-                  onChange={(e) => setReflection(e.target.value)}
-                  placeholder="The words are weightless here..."
-                  className="w-full h-40 bg-transparent border-none text-white text-xl font-light placeholder:text-zinc-800 focus:outline-none resize-none scrollbar-hide"
-                />
-              )}
+                <div className="mt-auto flex justify-end">
+                   <button
+                    onClick={() => setStep(1)}
+                    className="px-8 py-4 bg-white text-black rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center gap-3"
+                  >
+                    Start Reflection
+                    <Sparkles className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col gap-10 flex-1"
+              >
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-2xl text-white font-light">{steps[step - 1].question}</h3>
+                  <p className="text-zinc-500 text-xs font-light tracking-widest uppercase">{steps[step - 1].sub}</p>
+                </div>
 
-              <div className="flex justify-between items-center mt-4">
-                <button 
-                  onClick={onClose}
-                  className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest hover:text-white transition-colors"
-                >
-                  Skip Reflection
-                </button>
-                <button
-                  onClick={() => step < 3 ? setStep(step + 1) : onClose()}
-                  className="px-8 py-4 bg-white text-black rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)] flex items-center gap-3"
-                >
-                  {step === 3 ? "Archive Session" : "Continue"}
-                  <Sparkles className="w-4 h-4" />
-                </button>
-              </div>
-            </motion.div>
+                {step === 1 && (
+                  <div className="flex flex-col gap-8">
+                    <div className="flex justify-between text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                      <span>Weightless</span>
+                      <span>Critical Mass</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" max="100" 
+                      value={energy} 
+                      onChange={(e) => setEnergy(parseInt(e.target.value))}
+                      className="w-full accent-shift-purple h-1 bg-white/5 rounded-full appearance-none cursor-pointer"
+                    />
+                    <div className="text-center text-5xl font-extralight text-white tracking-tighter">
+                      {energy}G
+                    </div>
+                  </div>
+                )}
+
+                {(step === 2 || step === 3) && (
+                  <textarea
+                    autoFocus
+                    value={reflection}
+                    onChange={(e) => setReflection(e.target.value)}
+                    placeholder="The words are weightless here..."
+                    className="w-full h-40 bg-transparent border-none text-white text-xl font-light placeholder:text-zinc-800 focus:outline-none resize-none scrollbar-hide"
+                  />
+                )}
+
+                <div className="mt-auto flex justify-between items-center">
+                  <button 
+                    onClick={onClose}
+                    className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest hover:text-white transition-colors"
+                  >
+                    Skip Reflection
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (step < 3) {
+                        setStep(step + 1);
+                      } else {
+                        if (onComplete) onComplete(energy);
+                        onClose();
+                      }
+                    }}
+                    className="px-8 py-4 bg-white text-black rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)] flex items-center gap-3"
+                  >
+                    {step === 3 ? "Archive Session" : "Continue"}
+                    <Sparkles className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           {/* Progress Indicator */}
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3">
-            {[1, 2, 3].map((s) => (
+            {[0, 1, 2, 3].map((s) => (
               <div 
                 key={s} 
                 className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${step === s ? "bg-shift-purple w-8" : "bg-white/10"}`} 
@@ -109,7 +175,7 @@ export default function ReflectionJournal({ onClose }: { onClose: () => void }) 
         <div className="flex items-center justify-center gap-4 opacity-50">
           <CloudRain className="w-4 h-4 text-zinc-500" />
           <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest italic">
-            "Your orbit was 84% stable today. Rest well."
+            "Your orbit was {100 - stats.peakLoad / 2}% stable today. Rest well."
           </p>
         </div>
       </div>
